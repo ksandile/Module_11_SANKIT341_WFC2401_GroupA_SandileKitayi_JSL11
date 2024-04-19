@@ -1,5 +1,7 @@
 // TASK: import helper functions from utils
+import { getTasks, createNewTask, patchTask, putTask, deleteTask } from '.utils/taskFunctions.js';
 // TASK: import initialData
+import initialData from "./initialData";
 
 
 /*************************************************************************************************************************************************
@@ -18,8 +20,49 @@ function initializeData() {
 
 // TASK: Get elements from the DOM
 const elements = {
-
-}
+    // Navigation Sidebar elements
+    sideBar: document.querySelector('.side-bar'),
+    logo: document.getElementById('logo'),
+    boardsNavLinks: document.getElementById('boards-nav-links-div'),
+    darkThemeIcon: document.getElementById('icon-dark'),
+    switchCheckbox: document.getElementById('switch'),
+    lightThemeIcon: document.getElementById('icon-light'),
+    hideSideBarBtn: document.getElementById('hide-side-bar-btn'),
+    showSideBarBtn: document.getElementById('show-side-bar-btn'),
+  
+    // Header elements
+    header: document.getElementById('header'),
+    headerBoardName: document.getElementById('header-board-name'),
+    addNewTaskBtn: document.getElementById('add-new-task-btn'),
+    editBoardBtn: document.getElementById('edit-board-btn'),
+    editBoardDiv: document.getElementById('editBoardDiv'),
+  
+    // Task Columns elements
+    todoColumn: document.querySelector('.column-div[data-status="todo"]'),
+    doingColumn: document.querySelector('.column-div[data-status="doing"]'),
+    doneColumn: document.querySelector('.column-div[data-status="done"]'),
+  
+    // New Task Modal elements
+    newTaskModal: document.getElementById('new-task-modal-window'),
+    titleInput: document.getElementById('title-input'),
+    descInput: document.getElementById('desc-input'),
+    selectStatus: document.getElementById('select-status'),
+    createTaskBtn: document.getElementById('create-task-btn'),
+    cancelAddTaskBtn: document.getElementById('cancel-add-task-btn'),
+  
+    // Edit Task Modal elements
+    editTaskModal: document.querySelector('.edit-task-modal-window'),
+    editTaskForm: document.getElementById('edit-task-form'),
+    editTaskTitleInput: document.getElementById('edit-task-title-input'),
+    editTaskDescInput: document.getElementById('edit-task-desc-input'),
+    editSelectStatus: document.getElementById('edit-select-status'),
+    saveTaskChangesBtn: document.getElementById('save-task-changes-btn'),
+    cancelEditBtn: document.getElementById('cancel-edit-btn'),
+    deleteTaskBtn: document.getElementById('delete-task-btn'),
+  
+    // Filter elements
+    filterDiv: document.getElementById('filterDiv'),
+};
 
 let activeBoard = ""
 
@@ -31,9 +74,10 @@ function fetchAndDisplayBoardsAndTasks() {
   displayBoards(boards);
   if (boards.length > 0) {
     const localStorageBoard = JSON.parse(localStorage.getItem("activeBoard"))
-    activeBoard = localStorageBoard ? localStorageBoard ;  boards[0]; 
-    elements.headerBoardName.textContent = activeBoard
-    styleActiveBoard(activeBoard)
+    activeBoard = localStorageBoard ? localStorageBoard :  boards[0]; // Fixed the ternary operator syntax
+    localStorage.setItem("activeBoard", activeBoard); //I've added a line to save the active board to localStorage to ensure consistency.
+    elements.headerBoardName.textContent = activeBoard; //close my code
+    styleActiveBoard(activeBoard); //close my code
     refreshTasksUI();
   }
 }
@@ -47,13 +91,13 @@ function displayBoards(boards) {
     const boardElement = document.createElement("button");
     boardElement.textContent = board;
     boardElement.classList.add("board-btn");
-    boardElement.click()  { 
+    boardElement.addEventListener('click', () => { 
       elements.headerBoardName.textContent = board;
       filterAndDisplayTasksByBoard(board);
-      activeBoard = board //assigns active board
-      localStorage.setItem("activeBoard", JSON.stringify(activeBoard))
-      styleActiveBoard(activeBoard)
-    };
+      activeBoard = board; //assigns active board
+      localStorage.setItem("activeBoard", JSON.stringify(activeBoard));
+      styleActiveBoard(activeBoard);
+    });
     boardsContainer.appendChild(boardElement);
   });
 

@@ -106,3 +106,17 @@ As you embark on implementing these features, remember the value of tackling the
 - **Saving New Tasks in localStorage**: As a user, I want my newly created tasks to be saved in localStorage so that my tasks persist even when I close or refresh the browser.
 - **Reflecting Task Updates in localStorage**: As a user, I expect tasks that I update to have their changes reflected in localStorage so that any modifications are not lost.
 - **Removing Deleted Tasks from localStorage**: As a user, I want tasks that I delete to be removed from localStorage so that my task list remains accurate and up-to-date.
+
+
+
+# Changes
+
+Fixed the ternary operator syntax in fetchAndDisplayBoardsAndTasks function.
+Removed unnecessary code duplication in the fetchAndDisplayBoardsAndTasks function.
+Fixed the comparison operator in the filterAndDisplayTasksByBoard function.
+Improved error handling and logging in the filterAndDisplayTasksByBoard function.
+Corrected the template literal syntax in the addTaskToUI function.
+Improved error handling and logging in the addTaskToUI function.
+Ensured the modal exists before trying to access its properties in the toggleModal function.
+Improved the logic and syntax of the toggleModal function.
+Removed redundant comments and added descriptive comments where necessary for clarity.

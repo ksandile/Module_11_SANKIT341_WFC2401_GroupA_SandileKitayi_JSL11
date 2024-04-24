@@ -1,5 +1,5 @@
 // TASK: import helper functions from utils
-import { getTasks, createNewTask, patchTask, deleteTask } from './utils/taskFunctions.js'; // Or: import { getTasks, createNewTask, patchTask, deleteTask } from './utils/taskFunctions.js';
+import { getTasks, createNewTask, patchTask, deleteTask, putTask } from './utils/taskFunctions.js'; // Or: import { getTasks, createNewTask, patchTask, deleteTask } from './utils/taskFunctions.js';
 // TASK: import initialData
 import { initialData } from './initialData.js';
 
@@ -10,7 +10,7 @@ import { initialData } from './initialData.js';
 
 // Function checks if local storage already has data, if not it loads initialData to localStorage
 
-localStorage.clear()
+//localStorage.clear()
 function initializeData() {
   if (!localStorage.getItem('tasks')) {
     localStorage.setItem('tasks', JSON.stringify(initialData)); 
@@ -127,8 +127,6 @@ function styleActiveBoard(boardName) {
   });
 }
 
-
-
 function addTaskToUI(task) {
   const column = document.querySelector(`.column-div[data-status="${task.status}"]`);
   if (!column) {
@@ -136,23 +134,17 @@ function addTaskToUI(task) {
     return;
   }
 
-  let tasksContainer = column.querySelector('.tasks-container');
-  if (!tasksContainer) {
-    console.warn(
-      `Tasks container not found for status: ${task.status}, creating one.`
-    );
-    tasksContainer = document.createElement('div');
-    tasksContainer.className = 'tasks-container';
-    column.appendChild(tasksContainer);
-  }
+  // Create a unique tasks container for each task
+  const tasksContainer = document.createElement('div');
+  tasksContainer.className = 'tasks-container';
+  column.appendChild(tasksContainer);
 
-    // Check if the task already exists in the tasks container
-    const existingTaskElements = tasksContainer.querySelectorAll('.task-div');
-    const taskExists = Array.from(existingTaskElements).some(element => element.dataset.taskId === task.id);
-    if (taskExists) {
-      console.warn(`Task with ID ${task.id} already exists in the tasks container.`);
-      return;
-    }
+  // Check if the task already exists in the tasks container
+  const existingTaskElement = tasksContainer.querySelector(`.task-div[data-task-id="${task.id}"]`);
+  if (existingTaskElement) {
+    console.warn(`Task with ID ${task.id} already exists in the tasks container.`);
+    return;
+  }
 
   const taskElement = document.createElement('div');
   taskElement.className = 'task-div';
@@ -162,9 +154,6 @@ function addTaskToUI(task) {
   
   tasksContainer.appendChild(taskElement);
 }
-
-
-
 
 function setupEventListeners() {
   // Cancel editing task event listener
@@ -235,15 +224,11 @@ function addTask(event) {
   if (newTask) {
     addTaskToUI(newTask);
     toggleModal(false);
+    updateLocalStorageTasks(newTask);
     newTask.board = activeBoard;
     initialData.push(newTask);
     elements.filterDiv.style.display = "none"; // Also hide the filter overlay
     event.target.reset();
-
-
-
-
-
     initialData.push(newTask);
     initialData.pop();
     localStorage.setItem('tasks',JSON.stringify(initialData));
@@ -251,7 +236,11 @@ function addTask(event) {
     refreshTasksUI();
   }
 }
-
+function updateLocalStorageTasks(newTask) {
+  let tasks = getTasks();
+  tasks.push(newTask);
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
 
 function toggleSidebar(show) {
    const sidebarElement = document.getElementById('side-bar-div');
@@ -271,27 +260,40 @@ function toggleSidebar(show) {
 }
 
 function toggleTheme() {
-  // Get a reference to the document body
-  const body = document.body;
+  // Toggle the 'light-theme' class on the body element
+  document.body.classList.toggle('light-theme');
 
-  // Toggle between light and dark theme classes on the body
-  body.classList.toggle("light-theme");
-  body.classList.toggle("dark-theme");
+  // Save the theme preference to localStorage
+  localStorage.setItem('light-theme', document.body.classList.contains('light-theme') ? 'enabled' : 'disabled');
 
-  // Toggle between dark and light logo based on the current theme
-  const darkLogo = document.getElementById("dark-logo");
-  const lightLogo = document.getElementById("light-logo");
+  // Get the image element
+  const logo = document.getElementById('logo');
 
-  if (body.classList.contains("light-theme")) {
-    darkLogo.style.display = "none";
-    lightLogo.style.display = "block";
+  // Check if the body has the 'light-theme' class
+  const isLightTheme = document.body.classList.contains('light-theme');
+
+  // Update the src attribute of the image based on the theme
+  if (isLightTheme) {
+    logo.src = './assets/logo-light.svg'; // Set the src for light theme
   } else {
-    lightLogo.style.display = "none";
-    darkLogo.style.display = "block";
+    logo.src = './assets/logo-dark.svg'; // Set the src for dark theme
   }
+}
 
-  // Store the theme preference in local storage
-  localStorage.setItem("theme", body.classList.contains("light-theme") ? "light" : "dark");
+// Function to set the theme based on the preference stored in local storage
+function setThemeFromLocalStorage() {
+  const theme = localStorage.getItem("theme");
+  const logo = document.getElementById("logo");
+
+  if (theme === "dark") {
+    document.body.classList.remove("light-theme"); 
+    document.body.classList.add("dark-theme");
+    logo.src = "./assets/logo-dark.svg"; 
+  } else if (theme === "light") {
+    document.body.classList.remove("dark-theme"); 
+    document.body.classList.add("light-theme");
+    logo.src = "./assets/logo-light.svg"; 
+  }
 }
 
 
@@ -328,24 +330,56 @@ function openEditTaskModal(task) {
 
   toggleModal(true, elements.editTaskModal); // Show the edit task modal
 }
+
 function saveTaskChanges(taskId) {
+  // Get new user inputs
   const updatedTitle = document.getElementById("edit-task-title-input").value;
   const updatedDescription = document.getElementById("edit-task-desc-input").value;
   const updatedStatus = document.getElementById("edit-select-status").value;
 
-  const updatedTask = {
-    id: taskId,
-    title: updatedTitle,
-    description: updatedDescription,
-    status: updatedStatus
-  };
+  // Get the tasks from local storage
+  let tasks = getTasks();
 
-  // Update task using a helper function (assuming you have a function named `updateTask`)
-  patchTask(taskId, updatedTask);
+  // Check if a task with the same ID already exists
+  const existingTaskIndex = tasks.findIndex(task => task.id === taskId);
 
-  // Close the modal and refresh the UI to reflect the changes
-  toggleModal(false, elements.editTaskModal); // Assuming you have a function to close the modal
+  if (existingTaskIndex !== -1) {
+    // If the task already exists, update its properties
+    tasks[existingTaskIndex].title = updatedTitle;
+    tasks[existingTaskIndex].description = updatedDescription;
+    tasks[existingTaskIndex].status = updatedStatus;
+  } else {
+    // If the task doesn't exist, create a new task object
+    const newTask = {
+      id: taskId,
+      title: updatedTitle,
+      description: updatedDescription,
+      status: updatedStatus
+    };
+
+    //upDate tasks using a helper function
+    patchTask(taskId, updateTask);
+
+    // Add the new task to the tasks array
+    tasks.push(newTask);
+  }
+
+  // Save the updated tasks array back to local storage
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+
+  // Call putTask to update the task in your storage mechanism
+  if (existingTaskIndex !== -1) {
+    putTask(taskId, tasks[existingTaskIndex]); // Pass the existing task
+  } else {
+    putTask(taskId, newTask); // Pass the newly created task
+  }
+
+  // Refresh the UI to reflect the changes
   refreshTasksUI();
+
+  // Close the modal
+  toggleModal(false, elements.editTaskModal);
+  setThemeFromLocalStorage();
 }
 
 
